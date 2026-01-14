@@ -26,28 +26,28 @@ html.dark ::-moz-selection {
 }
 
 /* Custom scrollbar for feedback table */
-.max-h-\[640px\]::-webkit-scrollbar {
+.feedback-scroll::-webkit-scrollbar {
   width: 8px;
 }
 
-.max-h-\[640px\]::-webkit-scrollbar-track {
+.feedback-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.max-h-\[640px\]::-webkit-scrollbar-thumb {
+.feedback-scroll::-webkit-scrollbar-thumb {
   background: rgb(161 161 170); /* zinc-400 */
   border-radius: 4px;
 }
 
-.max-h-\[640px\]::-webkit-scrollbar-thumb:hover {
+.feedback-scroll::-webkit-scrollbar-thumb:hover {
   background: rgb(113 113 122); /* zinc-500 */
 }
 
-.dark .max-h-\[640px\]::-webkit-scrollbar-thumb {
+.dark .feedback-scroll::-webkit-scrollbar-thumb {
   background: rgb(63 63 70); /* zinc-700 */
 }
 
-.dark .max-h-\[640px\]::-webkit-scrollbar-thumb:hover {
+.dark .feedback-scroll::-webkit-scrollbar-thumb:hover {
   background: rgb(82 82 91); /* zinc-600 */
 }
 

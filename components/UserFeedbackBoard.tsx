@@ -338,8 +338,12 @@ function SortableRow({
   );
 }
 
-export default function UserFeedbackBoard() {
-  const [tab, setTab] = useState<Kind>("FEEDBACK");
+export default function UserFeedbackBoard({
+  initialTab = "FEEDBACK"
+}: {
+  initialTab?: Kind;
+}) {
+  const [tab, setTab] = useState<Kind>(initialTab);
   const [tabDropdownOpen, setTabDropdownOpen] = useState(false);
   const [q, setQ] = useState("");
   const [hasUnfinishedTodos, setHasUnfinishedTodos] = useState(false);
@@ -362,6 +366,7 @@ export default function UserFeedbackBoard() {
   const [formTodos, setFormTodos] = useState<TodoItem[]>([]);
   const [formImages, setFormImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [extracting, setExtracting] = useState(false);
 
   // drag & drop
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -376,6 +381,10 @@ export default function UserFeedbackBoard() {
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const title = tab === "FEEDBACK" ? "用户反馈" : "夸赞";
+
+  useEffect(() => {
+    setTab(initialTab);
+  }, [initialTab]);
 
   const canSubmit = (() => {
     const hasAny =
@@ -650,6 +659,37 @@ export default function UserFeedbackBoard() {
         urls.push(data.url);
       }
       setFormImages((prev) => [...prev, ...urls].slice(0, 12));
+
+      // Auto OCR for screenshots: best-effort, only for PRAISE tab.
+      if (tab === "PRAISE" && urls.length) {
+        setExtracting(true);
+        try {
+          for (const u of urls) {
+            const headers: Record<string, string> = {
+              "content-type": "application/json"
+            };
+            try {
+              const k = window.localStorage.getItem("openai_api_key") ?? "";
+              if (k.trim()) headers["x-openai-api-key"] = k.trim();
+            } catch {
+              // ignore
+            }
+
+            const r = await fetch("/api/ai/ocr", {
+              method: "POST",
+              headers,
+              body: JSON.stringify({ url: u })
+            });
+            if (!r.ok) continue;
+            const j = (await r.json()) as { text?: string };
+            const text = (j.text ?? "").trim();
+            if (!text) continue;
+            setFormContent((prev) => (prev.trim().length ? `${prev}\n\n${text}` : text));
+          }
+        } finally {
+          setExtracting(false);
+        }
+      }
     } catch (e: any) {
       setErr(e?.message ?? "上传失败");
     } finally {
@@ -722,78 +762,8 @@ export default function UserFeedbackBoard() {
   }
 
   return (
-    <main className="w-full min-w-0 overflow-hidden rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/20">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="relative inline-block" data-tab-dropdown>
-            <button
-              className={[
-                "inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-base font-semibold transition-colors",
-                "border-sky-500/40 bg-sky-50 text-sky-900 hover:border-sky-500/60 dark:border-zinc-600 dark:bg-white dark:text-zinc-950 dark:hover:border-zinc-500"
-              ].join(" ")}
-              onClick={() => setTabDropdownOpen(!tabDropdownOpen)}
-            >
-              <span>{tab === "FEEDBACK" ? "反馈" : "夸赞"}</span>
-              <svg
-                className={`h-4 w-4 transition-transform ${tabDropdownOpen ? "rotate-180" : ""}`}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M6 9l6 6 6-6" />
-              </svg>
-            </button>
-            {tabDropdownOpen && (
-              <div className="absolute left-0 top-full z-50 mt-2 w-40 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
-                <button
-                  className={`w-full px-4 py-2 text-left text-sm transition-colors ${
-                    tab === "FEEDBACK"
-                      ? "bg-sky-50 text-sky-900 dark:bg-sky-950/30 dark:text-sky-200"
-                      : "text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-900"
-                  }`}
-                  onClick={() => {
-                    setTab("FEEDBACK");
-                    setTabDropdownOpen(false);
-                  }}
-                >
-                  反馈
-                </button>
-                <button
-                  className={`w-full px-4 py-2 text-left text-sm transition-colors ${
-                    tab === "PRAISE"
-                      ? "bg-sky-50 text-sky-900 dark:bg-sky-950/30 dark:text-sky-200"
-                      : "text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-900"
-                  }`}
-                  onClick={() => {
-                    setTab("PRAISE");
-                    setTabDropdownOpen(false);
-                  }}
-                >
-                  夸赞
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            {tab === "FEEDBACK"
-              ? "收集需求/建议/Bug，并沉淀待办任务"
-              : "收集用户夸赞，支持上传截图"}
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:border-zinc-600"
-            onClick={() => openCreate()}
-          >
-            ＋ 新增
-          </button>
-        </div>
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-center gap-2">
+    <main className="flex h-full w-full min-w-0 flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/20">
+      <div className="flex flex-wrap items-center gap-2">
         <div className="flex min-w-[240px] flex-1 items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
           <input
             className="w-full bg-transparent text-sm outline-none placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
@@ -802,6 +772,13 @@ export default function UserFeedbackBoard() {
             onChange={(e) => setQ(e.target.value)}
           />
         </div>
+        <button
+          className="rounded-xl bg-sky-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-400"
+          onClick={() => openCreate()}
+          title={tab === "FEEDBACK" ? "新增反馈" : "新增夸赞"}
+        >
+          ＋ 新增
+        </button>
         {tab === "FEEDBACK" ? (
           <button
             className={`rounded-xl border px-3 py-2 text-sm transition-colors ${
@@ -845,8 +822,8 @@ export default function UserFeedbackBoard() {
           onDragStart={onDragStart}
           onDragEnd={onDragEnd}
         >
-        <div className="mt-4 overflow-x-auto rounded-2xl border border-zinc-200 dark:border-zinc-800">
-          <div className="max-h-[640px] overflow-y-auto">
+        <div className="mt-4 flex-1 min-h-0 overflow-x-auto rounded-2xl border border-zinc-200 dark:border-zinc-800">
+          <div className="feedback-scroll h-full overflow-y-auto">
             <table className="min-w-[980px] w-full border-collapse">
               <thead className="sticky top-0 z-10 bg-zinc-50 dark:bg-zinc-950/40">
                 {tableHead}
@@ -873,7 +850,7 @@ export default function UserFeedbackBoard() {
                     className="px-3 py-8 text-center text-sm text-zinc-500 dark:text-zinc-400"
                     colSpan={tab === "FEEDBACK" ? 6 : 6}
                   >
-                    暂无数据，点击右上角 “＋ 新增” 新建。
+                    暂无数据，点击上方 “＋ 新增” 新建。
                   </td>
                 </tr>
               ) : null}
@@ -1093,10 +1070,10 @@ export default function UserFeedbackBoard() {
                       <button
                         type="button"
                         className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 hover:border-zinc-300 disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:border-zinc-600"
-                        disabled={uploading}
+                        disabled={uploading || extracting}
                         onClick={() => fileRef.current?.click()}
                       >
-                        {uploading ? "上传中…" : "上传图片"}
+                        {uploading ? "上传中…" : extracting ? "识别中…" : "上传图片"}
                       </button>
                       <input
                         ref={fileRef}

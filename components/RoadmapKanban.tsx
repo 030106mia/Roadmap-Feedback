@@ -695,28 +695,14 @@ export default function RoadmapKanban() {
   }
 
   return (
-    <main className="w-full min-w-0 overflow-hidden rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/20">
+    <main className="flex h-full w-full min-w-0 flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/20">
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
       >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="truncate text-lg font-semibold">Roadmap</div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:border-zinc-600"
-            onClick={() => openCreate()}
-          >
-            ＋ New task
-          </button>
-        </div>
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <div className="flex min-w-[240px] flex-1 items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
           <input
             className="w-full bg-transparent text-sm outline-none placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
@@ -725,6 +711,13 @@ export default function RoadmapKanban() {
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
+        <button
+          className="rounded-xl bg-sky-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-400"
+          onClick={() => openCreate()}
+          title="新建任务"
+        >
+          ＋ New
+        </button>
         <button
           className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:border-zinc-600"
           onClick={() => {
@@ -1003,8 +996,8 @@ export default function RoadmapKanban() {
 
       {err ? <div className="mt-3 text-sm text-red-400">{err}</div> : null}
 
-      <div className="mt-4">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-4 flex-1 min-h-0">
+        <div className="grid h-full grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           {STATUSES.map((col) => {
             const colItems = byStatus.get(col) ?? [];
             const tone = statusTone(col);
@@ -1013,7 +1006,7 @@ export default function RoadmapKanban() {
               <ColumnDrop key={col} id={containerIdForStatus(col)}>
                 <div
                   className={[
-                    "rounded-2xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900/20",
+                    "flex min-h-0 flex-col rounded-2xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900/20",
                     "border-t-2",
                     tone.top
                   ].join(" ")}
@@ -1048,7 +1041,7 @@ export default function RoadmapKanban() {
                   </button>
                 </div>
 
-                <div className="max-h-[580px] overflow-y-auto space-y-3 pr-1 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-300 [&::-webkit-scrollbar-thumb]:dark:bg-zinc-700 [&::-webkit-scrollbar-track]:bg-transparent">
+                <div className="kanban-scroll flex-1 min-h-0 overflow-y-auto space-y-3 pr-1 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-300 [&::-webkit-scrollbar-thumb]:dark:bg-zinc-700 [&::-webkit-scrollbar-track]:bg-transparent">
                   <SortableContext items={ids} strategy={verticalListSortingStrategy}>
                     {colItems.map((it) => (
                       <SortableCard key={it.id} item={it} />
@@ -1057,7 +1050,7 @@ export default function RoadmapKanban() {
 
                   {colItems.length === 0 ? (
                     <div className="rounded-xl border border-dashed border-zinc-300 p-3 text-xs text-zinc-500 dark:border-zinc-800">
-                      暂无卡片，点击右上角 “＋” 新建。
+                      暂无卡片，点击上方 “＋ New” 新建。
                     </div>
                   ) : null}
                 </div>
