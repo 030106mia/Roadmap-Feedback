@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Board {
+  id          String        @id @default(cuid())
+  name        String
+  description String        @default("")
+  sortOrder   Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  items       RoadmapItem[]
+}
+
+model RoadmapItem {
+  id          String      @id @default(cuid())
+  boardId     String
+  board       Board       @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String      @default("")
+  source      String      @default("") // 需求来源（例如：客户反馈/老板指令/Jira 链接等）
+  jiraKey     String      @default("") // Jira 单号（可选）
+  // SQLite 不支持原生 enum，这里使用 string + 默认值；上层用 zod 限制可选值
+  priority    String      @default("P2") // P0/P1/P2/P3
+  status      String      @default("BACKLOG") // BACKLOG/NEXT_UP/IN_PROGRESS/DONE（兼容历史 PLANNED）
+
+  startDate   DateTime?
+  endDate     DateTime?
+
+  sortOrder   Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  images      ItemImage[]
+  tags        ItemTag[]
+
+  @@index([boardId])
+  @@index([priority])
+  @@index([status])
+  @@index([jiraKey])
+}
+
+model Tag {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  items     ItemTag[]
+}
+
+model ItemTag {
+  itemId String
+  tagId  String
+
+  item   RoadmapItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  tag    Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, tagId])
+  @@index([tagId])
+}
+
+model ItemImage {
+  id        String      @id @default(cuid())
+  itemId    String
+  item      RoadmapItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  url       String
+  caption   String      @default("")
+  createdAt DateTime    @default(now())
+
+  @@index([itemId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  entity    String   // "Board" | "RoadmapItem" | "ItemImage" ...
+  entityId  String
+  action    String   // "CREATE" | "UPDATE" | "DELETE"
+  payload   String   @default("") // JSON string（diff/快照）
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+model UserFeedback {
+  id           String   @id @default(cuid())
+  // "FEEDBACK" | "PRAISE"
+  kind         String   @default("FEEDBACK")
+  // 用户名（可选）+ 邮箱（可选）
+  userName     String   @default("")
+  email        String   @default("")
+  // "IOS" | "MAC" | "WIN" | "ANDROID" | "PC" | "-"（仅 FEEDBACK 使用）
+  device       String   @default("-")
+  // "REQUEST" | "SUGGESTION" | "BUG"（仅 FEEDBACK 需要）
+  feedbackType String   @default("")
+  // "EMAIL" | "STORE" | "SOCIAL"（仅 PRAISE 使用）
+  source       String   @default("")
+  // "ZH_CN" | "ZH_TW" | "EN" | "JA" | "FR"（仅 PRAISE 使用）
+  language     String   @default("")
+
+  content      String   @default("")
+  todo         String   @default("")
+  todoDone     Boolean  @default(false)
+
+  sortOrder    Int      @default(0)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  images       FeedbackImage[]
+
+  @@index([kind])
+  @@index([device])
+  @@index([feedbackType])
+  @@index([email])
+  @@index([createdAt])
+}
+
+model FeedbackImage {
+  id         String       @id @default(cuid())
+  feedbackId String
+  feedback   UserFeedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  url        String
+  createdAt  DateTime     @default(now())
+
+  @@index([feedbackId])
+}
+

@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  height: 100%;
+}
+
+/* Let the theme decide (System / Dark / Light) */
+:root {
+  color-scheme: light dark;
+}
+
+/* Text selection: readable in both themes */
+html:not(.dark) ::selection,
+html:not(.dark) ::-moz-selection {
+  background: rgba(14, 165, 233, 0.28); /* sky-500 */
+  color: rgb(15 23 42); /* slate-900 */
+}
+
+html.dark ::selection,
+html.dark ::-moz-selection {
+  background: rgba(56, 189, 248, 0.28); /* sky-400 */
+  color: rgb(255 255 255);
+}
+
+/* Custom scrollbar for feedback table */
+.max-h-\[640px\]::-webkit-scrollbar {
+  width: 8px;
+}
+
+.max-h-\[640px\]::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.max-h-\[640px\]::-webkit-scrollbar-thumb {
+  background: rgb(161 161 170); /* zinc-400 */
+  border-radius: 4px;
+}
+
+.max-h-\[640px\]::-webkit-scrollbar-thumb:hover {
+  background: rgb(113 113 122); /* zinc-500 */
+}
+
+.dark .max-h-\[640px\]::-webkit-scrollbar-thumb {
+  background: rgb(63 63 70); /* zinc-700 */
+}
+
+.dark .max-h-\[640px\]::-webkit-scrollbar-thumb:hover {
+  background: rgb(82 82 91); /* zinc-600 */
+}
+
