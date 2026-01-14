@@ -4,7 +4,10 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // On Vercel Postgres, DATABASE_URL is often a pooled/pooler URL.
+  // Prisma schema pushes/migrations should use the Prisma-specific (non-pooled) URL.
+  // Vercel auto-injects POSTGRES_PRISMA_URL; use it to avoid env-var conflicts.
+  url      = env("POSTGRES_PRISMA_URL")
 }
 
 model Board {
